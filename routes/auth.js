@@ -4,9 +4,10 @@ const User = require('../models/User');
 const Client = require('../models/Client');
 const Eleveur = require('../models/Eleveur');
 const { generateToken } = require('../utils/token');
-const { registerValidation, loginValidation } = require('../middleware/validation');
+const { registerValidation, loginValidation } = require('../middleware/validation'); // ⚠️ Ajouter loginValidation
+const { getCityCoordinates } = require('../utils/cities');
 
-// 🔐 Route de création d'utilisateur - AVEC VALEURS DYNAMIQUES
+// 🔐 ROUTE REGISTER
 router.post('/register', async (req, res) => {
   try {
     const { error } = registerValidation(req.body);
@@ -18,19 +19,9 @@ router.post('/register', async (req, res) => {
     }
 
     const { 
-      email, 
-      password, 
-      role, 
-      firstName, 
-      lastName, 
-      phone,
-      // Données optionnelles pour l'adresse
-      addressLine1,
-      addressLine2,
-      city,
-      postalCode,
-      farmName, // Pour les éleveurs
-      description // Pour les éleveurs
+      email, password, role, firstName, lastName, phone,
+      addressLine1, city, addressLine2, postalCode,
+      farmName, description
     } = req.body;
 
     // Vérifier si l'utilisateur existe déjà
@@ -56,16 +47,23 @@ router.post('/register', async (req, res) => {
 
     await newUser.save();
 
-    // 🔥 CRÉATION DU PROFIL AVEC VALEURS DYNAMIQUES
+    // 🔥 GÉNÉRATION AUTOMATIQUE DES COORDONNÉES
+    const userCity = city || 'Abidjan';
+    const cityData = getCityCoordinates(userCity);
+
     if (role === 'client') {
       const clientData = {
         userId: newUser._id,
         type: 'particulier',
         deliveryAddress: {
           addressLine1: addressLine1 || `Adresse de ${firstName} ${lastName}`,
-          addressLine2: addressLine2 || 'non-definie',
-          city: city || 'Abidjan',
-          postalCode: postalCode || 'non-definie'
+          city: userCity,
+          addressLine2: addressLine2 || undefined,
+          postalCode: postalCode || undefined,
+          coordinates: {
+            type: 'Point',
+            coordinates: cityData.coordinates
+          }
         }
       };
 
@@ -78,8 +76,12 @@ router.post('/register', async (req, res) => {
         farmName: farmName || `Ferme de ${firstName} ${lastName}`,
         farmAddress: {
           addressLine1: addressLine1 || `Adresse de la ferme ${firstName} ${lastName}`,
-          addressLine2: addressLine2 || 'non-definie',
-          city: city || 'Abidjan'
+          city: userCity,
+          addressLine2: addressLine2 || undefined,
+          coordinates: {
+            type: 'Point',
+            coordinates: cityData.coordinates
+          }
         },
         isApproved: false,
         description: description || `Éleveur professionnel ${firstName} ${lastName}`
@@ -89,23 +91,24 @@ router.post('/register', async (req, res) => {
       await eleveur.save();
     }
 
-    // Générer un token JWT
+    // Générer le token JWT
     const token = generateToken(newUser._id);
-
-    // 🔥 STOCKER LE TOKEN DANS LA BASE DE DONNÉES
     await newUser.addToken(token);
 
     res.status(201).json({
       success: true,
-      message: '✅ Utilisateur créé avec succès!',
+      message: `✅ Utilisateur créé avec succès à ${userCity}!`,
       token,
       user: {
         id: newUser._id,
         email: newUser.email,
         role: newUser.role,
-        profile: newUser.profile
+        profile: newUser.profile,
+        city: userCity,
+        region: cityData.region
       }
     });
+
   } catch (error) {
     console.error('Erreur création utilisateur:', error);
     res.status(500).json({ 
@@ -116,7 +119,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// 🔐 Route de connexion - CORRIGÉE
+// 🔐 ROUTE LOGIN - ⚠️ EN DEHORS DE REGISTER !
 router.post('/login', async (req, res) => {
   try {
     const { error } = loginValidation(req.body);
@@ -158,8 +161,27 @@ router.post('/login', async (req, res) => {
     // Générer un nouveau token
     const token = generateToken(user._id);
 
-    // 🔥 STOCKER LE NOUVEAU TOKEN DANS LA BASE DE DONNÉES
+    // Stocker le nouveau token dans la base
     await user.addToken(token);
+
+    // Récupérer les infos du profil selon le rôle
+    let profileInfo = {};
+    if (user.role === 'client') {
+      const client = await Client.findOne({ userId: user._id });
+      const cityData = getCityCoordinates(client?.deliveryAddress?.city || 'Abidjan');
+      profileInfo = { 
+        city: client?.deliveryAddress?.city,
+        region: cityData.region
+      };
+    } else if (user.role === 'eleveur') {
+      const eleveur = await Eleveur.findOne({ userId: user._id });
+      const cityData = getCityCoordinates(eleveur?.farmAddress?.city || 'Abidjan');
+      profileInfo = { 
+        city: eleveur?.farmAddress?.city,
+        farmName: eleveur?.farmName,
+        region: cityData.region
+      };
+    }
 
     res.json({
       success: true,
@@ -169,7 +191,8 @@ router.post('/login', async (req, res) => {
         id: user._id,
         email: user.email,
         role: user.role,
-        profile: user.profile
+        profile: user.profile,
+        ...profileInfo
       }
     });
 
@@ -179,38 +202,6 @@ router.post('/login', async (req, res) => {
       success: false,
       message: 'Erreur serveur lors de la connexion',
       error: error.message
-    });
-  }
-});
-
-// 🔐 Route pour voir tous les tokens d'un utilisateur (debug)
-router.get('/debug/tokens/:userId', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.userId).select('email tokens');
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'Utilisateur non trouvé'
-      });
-    }
-
-    res.json({
-      success: true,
-      email: user.email,
-      total_tokens: user.tokens.length,
-      tokens: user.tokens.map(t => ({
-        token_preview: t.token.substring(0, 30) + '...',
-        createdAt: t.createdAt,
-        _id: t._id
-      }))
-    });
-
-  } catch (error) {
-    console.error('Erreur debug tokens:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Erreur serveur'
     });
   }
 });

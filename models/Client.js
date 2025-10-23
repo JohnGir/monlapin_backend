@@ -21,11 +21,12 @@ const clientSchema = new mongoose.Schema({
       type: {
         type: String,
         enum: ['Point'],
+        required: true,
         default: 'Point'
       },
       coordinates: {
         type: [Number],
-        required: false // ⚠️ RENDU OPTIONNEL
+        required: true
       }
     }
   },
@@ -41,7 +42,7 @@ const clientSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index géospatial SPARSE (fonctionne seulement si coordinates existe)
-clientSchema.index({ 'deliveryAddress.coordinates': '2dsphere' }, { sparse: true });
+// Index géospatial
+clientSchema.index({ 'deliveryAddress.coordinates': '2dsphere' });
 
 module.exports = mongoose.model('Client', clientSchema);

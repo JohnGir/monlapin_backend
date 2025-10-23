@@ -1,6 +1,7 @@
 const Joi = require('joi');
+const { isValidIvoirianCity } = require('../utils/cities');
 
-// Validation pour l'inscription
+// Validation pour l'inscription avec villes ivoiriennes - CORRIGÉE
 const registerValidation = (data) => {
   const schema = Joi.object({
     email: Joi.string().email().required().messages({
@@ -26,7 +27,24 @@ const registerValidation = (data) => {
     phone: Joi.string().pattern(/^\+?[0-9\s\-\(\)]{10,}$/).required().messages({
       'string.pattern.base': 'Numéro de téléphone invalide',
       'any.required': 'Le téléphone est requis'
-    })
+    }),
+    addressLine1: Joi.string().max(200).optional().allow(''),
+    addressLine2: Joi.string().max(200).optional().allow(''),
+    
+    // 🔥 CORRECTION : city doit être allowed même si non fourni
+    city: Joi.string().max(100).optional().allow('').custom((value, helpers) => {
+      // Si une ville est fournie, on la valide
+      if (value && value.trim() !== '' && !isValidIvoirianCity(value)) {
+        return helpers.error('any.invalid');
+      }
+      return value;
+    }, 'Ville ivoirienne validation').messages({
+      'any.invalid': 'Ville ivoirienne non reconnue. Villes disponibles: Abidjan, Yamoussoukro, Bouaké, Daloa, Korhogo, San-Pédro, Abengourou, Man, Divo, Gagnoa, etc.'
+    }),
+    
+    postalCode: Joi.string().max(20).optional().allow(''),
+    farmName: Joi.string().max(100).optional().allow(''),
+    description: Joi.string().max(500).optional().allow('')
   });
 
   return schema.validate(data);
