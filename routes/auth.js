@@ -206,4 +206,52 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// 🔧 ROUTE TEMPORAIRE POUR APPROUVER UN ÉLEVEUR (DÉVELOPPEMENT SEULEMENT)
+router.patch('/dev/approve-eleveur/:email', async (req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({
+        success: false,
+        message: 'Fonction désactivée en production'
+      });
+    }
+
+    const user = await User.findOne({ email: req.params.email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvé'
+      });
+    }
+
+    const eleveur = await Eleveur.findOne({ userId: user._id });
+    if (!eleveur) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil éleveur non trouvé'
+      });
+    }
+
+    eleveur.isApproved = true;
+    await eleveur.save();
+
+    res.json({
+      success: true,
+      message: `Éleveur ${user.email} approuvé avec succès`,
+      eleveur: {
+        farmName: eleveur.farmName,
+        city: eleveur.farmAddress.city,
+        isApproved: eleveur.isApproved
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur approbation éleveur:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+});
+
 module.exports = router;

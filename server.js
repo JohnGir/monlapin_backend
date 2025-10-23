@@ -24,7 +24,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lapins', require('./routes/lapins'));
-app.use('/api/commandes', require('./routes/commandes')); // ← AJOUT
+app.use('/api/commandes', require('./routes/commandes')); // ← 
+app.use('/api/lapins', require('./routes/lapins'));
 
 // Route de test
 app.get('/', (req, res) => {
