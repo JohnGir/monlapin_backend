@@ -46,6 +46,7 @@ const auth = async (req, res, next) => {
   }
 };
 
+// Middleware d'autorisation basique
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
@@ -58,4 +59,51 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { auth, authorize };
+// Middleware pour vérifier la propriété d'un lapin
+const checkLapinOwnership = async (req, res, next) => {
+  try {
+    const Lapin = require('../models/Lapin');
+    const Eleveur = require('../models/Eleveur');
+    
+    const lapin = await Lapin.findById(req.params.id);
+    
+    if (!lapin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lapin non trouvé'
+      });
+    }
+
+    // Les admins et gestionnaires peuvent tout faire
+    if (req.user.role === 'admin' || req.user.role === 'gestionnaire') {
+      return next();
+    }
+
+    // Les éleveurs ne peuvent modifier que leurs propres lapins
+    if (req.user.role === 'eleveur') {
+      const eleveur = await Eleveur.findOne({ userId: req.user.id });
+      if (eleveur && lapin.eleveurId.toString() === eleveur._id.toString()) {
+        return next();
+      }
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: 'Vous n\'êtes pas autorisé à modifier ce lapin'
+    });
+
+  } catch (error) {
+    console.error('Erreur checkLapinOwnership:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+// ⚠️ TOUT EST BIEN EXPORTÉ
+module.exports = { 
+  auth, 
+  authorize, 
+  checkLapinOwnership  // ⚠️ LIGNE D'APPARTENANCE PRÉSENTE
+};

@@ -1,15 +1,25 @@
+// ⚠️ AJOUTEZ CETTE LIGNE AU DÉBUT DU FICHIER
+require('dotenv').config();
+
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const Eleveur = require('./models/Eleveur');
 
 const createEleveurApprouve = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/lapin_business');
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('✅ Connecté à MongoDB');
+
+    // Vérifier que JWT_SECRET est défini
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET non défini dans les variables d\'environnement');
+    }
+
+    console.log('🔑 JWT_SECRET chargé:', process.env.JWT_SECRET ? 'OUI' : 'NON');
 
     // Données de l'éleveur
     const eleveurData = {
-      email: 'eleveur.approuve@test.com',
+      email: 'eleveur.bouafle@test.com',
       password: '123456',
       firstName: 'Jean',
       lastName: 'Akichi',
@@ -53,14 +63,14 @@ const createEleveurApprouve = async () => {
           coordinates: [-4.008, 5.320] // Abidjan
         }
       },
-      isApproved: true, // ⚠️ DIRECTEMENT APPROUVÉ
+      isApproved: true,
       description: `Éleveur professionnel ${eleveurData.firstName} ${eleveurData.lastName}`
     });
 
     await eleveur.save();
     console.log('✅ Éleveur créé et approuvé:', eleveur._id);
 
-    // Générer un token (vous pouvez utiliser le même code que dans auth.js)
+    // Générer un token
     const { generateToken } = require('./utils/token');
     const token = generateToken(user._id);
     
@@ -77,7 +87,7 @@ const createEleveurApprouve = async () => {
     process.exit(0);
 
   } catch (error) {
-    console.error('❌ Erreur:', error);
+    console.error('❌ Erreur:', error.message);
     process.exit(1);
   }
 };
