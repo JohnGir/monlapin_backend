@@ -19,7 +19,7 @@ const createEleveurApprouve = async () => {
 
     // Données de l'éleveur
     const eleveurData = {
-      email: 'eleveur.bouafle@test.com',
+      email: 'eleveur.abidjan@test.com',
       password: '123456',
       firstName: 'Jean',
       lastName: 'Akichi',
