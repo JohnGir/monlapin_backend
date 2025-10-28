@@ -10,7 +10,6 @@ router.get('/', async (req, res) => {
   try {
     const {
       category,
-      breed,
       minPrice,
       maxPrice,
       city,
@@ -22,8 +21,6 @@ router.get('/', async (req, res) => {
     let filter = { isAvailable: true, stock: { $gt: 0 } };
     
     if (category) filter.category = category;
-    if (breed) filter.breed = new RegExp(breed, 'i');
-    if (city) filter['eleveurId.city'] = new RegExp(city, 'i');
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
@@ -39,9 +36,19 @@ router.get('/', async (req, res) => {
 
     const total = await Lapin.countDocuments(filter);
 
+    // 🔥 CALCUL DU STOCK TOTAL
+    const totalStock = await Lapin.aggregate([
+      { $match: filter },
+      { $group: { _id: null, totalStock: { $sum: "$stock" } } }
+    ]);
+
     res.json({
       success: true,
       data: lapins,
+      stats: {
+        totalLapins: total,
+        totalStock: totalStock[0]?.totalStock || 0
+      },
       pagination: {
         page: Number(page),
         limit: Number(limit),
