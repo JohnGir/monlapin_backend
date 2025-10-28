@@ -37,17 +37,17 @@ router.get('/', async (req, res) => {
     const total = await Lapin.countDocuments(filter);
 
     // 🔥 CALCUL DU STOCK TOTAL
-    const totalStock = await Lapin.aggregate([
+    const totalLapins = await Lapin.aggregate([
       { $match: filter },
-      { $group: { _id: null, totalStock: { $sum: "$stock" } } }
+      { $group: { _id: null, totalLapins: { $sum: "$stock" } } }
     ]);
 
     res.json({
       success: true,
       data: lapins,
       stats: {
-        totalLapins: total,
-        totalStock: totalStock[0]?.totalStock || 0
+        totalRaceLapins: total,
+        totalLapins: totalLapins[0]?.totalLapins || 0
       },
       pagination: {
         page: Number(page),
