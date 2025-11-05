@@ -26,6 +26,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lapins', require('./routes/lapins'));
 app.use('/api/commandes', require('./routes/commandes')); // ← 
 app.use('/api/lapins', require('./routes/lapins'));
+app.use('/api/newsletter', require('./routes/newsletter'));
 
 // Route de test
 app.get('/', (req, res) => {
