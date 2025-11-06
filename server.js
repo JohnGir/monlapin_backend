@@ -17,9 +17,16 @@ connectDB();
 const app = express();
 
 // Middlewares
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Autoriser uniquement ton front
+app.use(cors({
+  origin: 'https://www.monlapinci.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
+}));
+
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
@@ -60,14 +67,7 @@ app.use((error, req, res, next) => {
   });
 });
 
-const cors = require('cors');
 
-// Autoriser uniquement ton front
-app.use(cors({
-  origin: 'https://www.monlapinci.com',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type'],
-}));
 
 
 const PORT = process.env.PORT || 5000;
