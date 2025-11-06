@@ -62,7 +62,7 @@ app.use((error, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📊 Environnement: ${process.env.NODE_ENV}`);
   console.log(`🔗 URL: http://localhost:${PORT}`);
@@ -71,4 +71,3 @@ app.listen(PORT, () => {
   console.log('   🐇 Lapins:    /api/lapins');
   console.log('   📦 Commandes: /api/commandes');
 });
-
