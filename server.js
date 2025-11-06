@@ -60,6 +60,16 @@ app.use((error, req, res, next) => {
   });
 });
 
+const cors = require('cors');
+
+// Autoriser uniquement ton front
+app.use(cors({
+  origin: 'https://www.monlapinci.com',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type'],
+}));
+
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
