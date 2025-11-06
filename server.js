@@ -21,18 +21,34 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Autoriser uniquement ton front
+const allowedOrigins = [
+  'https://monlapinci.com',
+  'https://www.monlapinci.com',
+];
+
 app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+/* app.use(cors({
   origin: 'https://www.monlapinci.com',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type'],
-}));
+})); */
 
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lapins', require('./routes/lapins'));
 app.use('/api/commandes', require('./routes/commandes')); // ← 
-app.use('/api/lapins', require('./routes/lapins'));
 app.use('/api/newsletter', require('./routes/newsletter'));
 
 // Route de test
@@ -45,7 +61,8 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       lapins: '/api/lapins', 
-      commandes: '/api/commandes'
+      commandes: '/api/commandes',
+      newsletter: '/api/newsletter'
     }
   });
 });
@@ -80,4 +97,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('   🔐 Auth:      /api/auth');
   console.log('   🐇 Lapins:    /api/lapins');
   console.log('   📦 Commandes: /api/commandes');
+  console.log('   📧 Newsletter:/api/newsletter');
 });
