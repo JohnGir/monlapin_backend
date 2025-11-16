@@ -134,6 +134,15 @@ router.post('/', auth, authorize('eleveur'), async (req, res) => {
     }
     console.log('✅ Éleveur approuvé');
 
+    // Vérifier que la catégorie existe
+    const category = await Category.findById(req.body.categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Catégorie non trouvée'
+      });
+    }
+
     // Créer le lapin
     console.log('📝 Création du document Lapin...');
     const lapin = new Lapin({
@@ -156,8 +165,10 @@ router.post('/', auth, authorize('eleveur'), async (req, res) => {
 
     // Populer pour la réponse
     await lapin.populate('eleveurId', 'farmName farmAddress.city');
-
     console.log('=== 🎉 CRÉATION RÉUSSIE ===');
+
+    await lapin.populate('categoryId', 'name description');
+    await lapin.populate('eleveurId', 'farmName farmAddress.city');
     
     res.status(201).json({
       success: true,
