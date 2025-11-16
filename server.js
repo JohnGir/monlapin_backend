@@ -45,7 +45,8 @@ app.use(cors({
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lapins', require('./routes/lapins'));
 app.use('/api/commandes', require('./routes/commandes')); // ← 
-app.use('/api/newsletter', require('./routes/newsletter'));
+app.use('/api/newsletter', require('./routes/newsletter')); // ← 
+app.use('/api/categories', require('./routes/categories')); // ← 
 
 // Route de test
 app.get('/', (req, res) => {
