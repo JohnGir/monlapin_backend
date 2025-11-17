@@ -10,15 +10,18 @@ const createInitialCategories = async () => {
     const categories = [
       {
         name: 'Lapin frais',
-        description: 'Lapin frais directement de l\'élevage'
+        description: 'Lapin frais directement de l\'élevage',
+        image: '/images/categories/lapin-frais.jpg'
       },
       {
         name: 'Lapin fumé',
-        description: 'Lapin fumé selon les méthodes traditionnelles'
+        description: 'Lapin fumé selon les méthodes traditionnelles',
+        image: '/images/categories/lapin-fume.png'
       },
       {
         name: 'Lapin prêt à cuire',
-        description: 'Lapin préparé et prêt pour la cuisson'
+        description: 'Lapin préparé et prêt pour la cuisson',
+        image: '/images/categories/lapin-pret-a-cuire.png'
       }
     ];
 
@@ -30,11 +33,17 @@ const createInitialCategories = async () => {
         await category.save();
         console.log(`✅ Catégorie créée: ${categoryData.name}`);
       } else {
-        console.log(`ℹ️  Catégorie existe déjà: ${categoryData.name}`);
+        // Mettre à jour la catégorie existante avec l'image
+        await Category.findOneAndUpdate(
+          { name: categoryData.name },
+          { image: categoryData.image },
+          { new: true }
+        );
+        console.log(`🔄 Catégorie mise à jour: ${categoryData.name}`);
       }
     }
 
-    console.log('\n🎉 Catégories initiales créées avec succès!');
+    console.log('\n🎉 Catégories initiales créées/mises à jour avec succès!');
     process.exit(0);
 
   } catch (error) {
