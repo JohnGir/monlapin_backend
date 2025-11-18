@@ -11,6 +11,10 @@ const categorySchema = new mongoose.Schema({
     type: String,
     maxlength: 500
   },
+  image: {
+    type: String,
+    default: '/images/categories/default.jpg'
+  },
   isActive: {
     type: Boolean,
     default: true
