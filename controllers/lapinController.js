@@ -6,7 +6,7 @@ const { lapinValidation } = require('../middleware/validation');
 exports.getLapins = async (req, res) => {
   try {
     const {
-      category,
+      categoryId, // ← Changé de 'category' à 'categoryId'
       breed,
       minPrice,
       maxPrice,
@@ -17,7 +17,7 @@ exports.getLapins = async (req, res) => {
     // Construire le filtre
     let filter = { isAvailable: true };
     
-    if (category) filter.category = category;
+    if (categoryId) filter.categoryId = categoryId; // ← CORRECTION ICI
     if (breed) filter.breed = new RegExp(breed, 'i');
     if (minPrice || maxPrice) {
       filter.price = {};
@@ -27,6 +27,7 @@ exports.getLapins = async (req, res) => {
 
     const lapins = await Lapin.find(filter)
       .populate('eleveurId', 'farmName farmAddress.city')
+      .populate('categoryId', 'name description image') // ← AJOUT: Peupler la catégorie
       .select('-__v')
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -47,6 +48,64 @@ exports.getLapins = async (req, res) => {
 
   } catch (error) {
     console.error('Erreur getLapins:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+};
+
+// Récupérer les lapins d'une catégorie spécifique
+exports.getLapinsByCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    // Vérifier que la catégorie existe
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Catégorie non trouvée'
+      });
+    }
+
+    const filter = { 
+      isAvailable: true, 
+      categoryId: categoryId 
+    };
+
+    const lapins = await Lapin.find(filter)
+      .populate('eleveurId', 'farmName farmAddress.city')
+      .populate('categoryId', 'name description image')
+      .select('-__v')
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Lapin.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        category: {
+          _id: category._id,
+          name: category.name,
+          description: category.description,
+          image: category.image
+        },
+        lapins: lapins
+      },
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur getLapinsByCategory:', error);
     res.status(500).json({
       success: false,
       message: 'Erreur serveur'

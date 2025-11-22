@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Lapin = require('../models/Lapin');
 const Eleveur = require('../models/Eleveur');
+const Category = require('../models/Category'); // ⬅️ AJOUT IMPORTANT
 const { lapinValidation } = require('../middleware/validation');
 const { auth, authorize, checkLapinOwnership } = require('../middleware/auth');
 
@@ -9,7 +10,7 @@ const { auth, authorize, checkLapinOwnership } = require('../middleware/auth');
 router.get('/', async (req, res) => {
   try {
     const {
-      category,
+      categoryId, // ⬅️ CORRIGÉ: 'category' → 'categoryId'
       minPrice,
       maxPrice,
       city,
@@ -20,7 +21,7 @@ router.get('/', async (req, res) => {
     // Construire le filtre
     let filter = { isAvailable: true, stock: { $gt: 0 } };
     
-    if (category) filter.category = category;
+    if (categoryId) filter.categoryId = categoryId; // ⬅️ CORRIGÉ: 'category' → 'categoryId'
     if (minPrice || maxPrice) {
       filter.price = {};
       if (minPrice) filter.price.$gte = Number(minPrice);
@@ -29,6 +30,7 @@ router.get('/', async (req, res) => {
 
     const lapins = await Lapin.find(filter)
       .populate('eleveurId', 'farmName farmAddress.city farmAddress.coordinates')
+      .populate('categoryId', 'name description image') // ⬅️ AJOUT: Peupler la catégorie
       .select('-__v')
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -66,11 +68,71 @@ router.get('/', async (req, res) => {
   }
 });
 
+// 🐇 GET /api/lapins/category/:categoryId - Lapins par catégorie (PUBLIC) ⬅️ NOUVELLE ROUTE
+router.get('/category/:categoryId', async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    // Vérifier que la catégorie existe
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Catégorie non trouvée'
+      });
+    }
+
+    const filter = { 
+      isAvailable: true, 
+      stock: { $gt: 0 },
+      categoryId: categoryId 
+    };
+
+    const lapins = await Lapin.find(filter)
+      .populate('eleveurId', 'farmName farmAddress.city farmAddress.coordinates')
+      .populate('categoryId', 'name description image')
+      .select('-__v')
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .sort({ createdAt: -1 });
+
+    const total = await Lapin.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        category: {
+          _id: category._id,
+          name: category.name,
+          description: category.description,
+          image: category.image
+        },
+        lapins: lapins
+      },
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Erreur getLapinsByCategory:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur serveur'
+    });
+  }
+});
+
 // 🐇 GET /api/lapins/:id - Détails d'un lapin (PUBLIC)
 router.get('/:id', async (req, res) => {
   try {
     const lapin = await Lapin.findById(req.params.id)
-      .populate('eleveurId', 'farmName farmAddress.city description');
+      .populate('eleveurId', 'farmName farmAddress.city description')
+      .populate('categoryId', 'name description image'); // ⬅️ AJOUT: Peupler la catégorie
 
     if (!lapin) {
       return res.status(404).json({
@@ -137,11 +199,13 @@ router.post('/', auth, authorize('eleveur'), async (req, res) => {
     // Vérifier que la catégorie existe
     const category = await Category.findById(req.body.categoryId);
     if (!category) {
+      console.log('❌ CATÉGORIE NON TROUVÉE:', req.body.categoryId);
       return res.status(404).json({
         success: false,
         message: 'Catégorie non trouvée'
       });
     }
+    console.log('✅ Catégorie trouvée:', category.name);
 
     // Créer le lapin
     console.log('📝 Création du document Lapin...');
@@ -150,13 +214,12 @@ router.post('/', auth, authorize('eleveur'), async (req, res) => {
       age: req.body.age,
       weight: req.body.weight,
       price: req.body.price,
-      category: req.body.category,
+      categoryId: req.body.categoryId, // ⬅️ CORRIGÉ: 'category' → 'categoryId'
       description: req.body.description,
       stock: req.body.stock,
       eleveurId: eleveur._id,
       isAvailable: true,
-      createdAt: new Date(), // ⚠️ AJOUTÉ (sera écrasé par timestamps)
-      images: [] // ⚠️ AJOUTÉ (champ optionnel mais dans le validateur)
+      images: req.body.images || [] // ⬅️ CORRIGÉ
     });
 
     console.log('💾 Sauvegarde en base...');
@@ -164,12 +227,11 @@ router.post('/', auth, authorize('eleveur'), async (req, res) => {
     console.log('✅ Lapin sauvegardé avec ID:', lapin._id);
 
     // Populer pour la réponse
-    await lapin.populate('eleveurId', 'farmName farmAddress.city');
-    console.log('=== 🎉 CRÉATION RÉUSSIE ===');
-
     await lapin.populate('categoryId', 'name description');
     await lapin.populate('eleveurId', 'farmName farmAddress.city');
     
+    console.log('=== 🎉 CRÉATION RÉUSSIE ===');
+
     res.status(201).json({
       success: true,
       message: 'Lapin créé avec succès',
@@ -194,7 +256,9 @@ router.put('/:id', auth, authorize('eleveur', 'admin', 'gestionnaire'), checkLap
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    ).populate('eleveurId', 'farmName farmAddress.city');
+    )
+    .populate('eleveurId', 'farmName farmAddress.city')
+    .populate('categoryId', 'name description image'); // ⬅️ AJOUT
 
     res.json({
       success: true,
@@ -243,6 +307,7 @@ router.get('/eleveur/mes-lapins', auth, authorize('eleveur'), async (req, res) =
 
     const lapins = await Lapin.find({ eleveurId: eleveur._id })
       .populate('eleveurId', 'farmName farmAddress.city')
+      .populate('categoryId', 'name description image') // ⬅️ AJOUT
       .sort({ createdAt: -1 });
 
     res.json({

@@ -84,8 +84,13 @@ const lapinValidation = (data) => {
       'number.min': 'Le prix ne peut pas être négatif',
       'any.required': 'Le prix est requis'
     }),
-    categories: Joi.string().valid('Lapin frais', 'Lapin fumé', 'Lapin prêt à cuire').required().messages({
+    /* categories: Joi.string().valid('Lapin frais', 'Lapin fumé', 'Lapin prêt à cuire').required().messages({
       'any.only': 'La catégorie doit être: Lapin frais, Lapin fumé ou Lapin prêt à cuire',
+      'any.required': 'La catégorie est requise'
+    }), */
+    categoryId: Joi.string().hex().length(24).required().messages({
+      'string.hex': 'L\'ID de catégorie doit être un ObjectId valide',
+      'string.length': 'L\'ID de catégorie doit contenir 24 caractères',
       'any.required': 'La catégorie est requise'
     }),
     description: Joi.string().max(1000).allow('').optional(),
