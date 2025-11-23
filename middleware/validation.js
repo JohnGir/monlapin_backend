@@ -68,10 +68,10 @@ const loginValidation = (data) => {
 // Validation pour créer un lapin
 const lapinValidation = (data) => {
   const schema = Joi.object({
-    breed: Joi.string().min(2).max(100).required().messages({
+    /* breed: Joi.string().min(2).max(100).required().messages({
       'string.min': 'La race doit contenir au moins 2 caractères',
       'any.required': 'La race est requise'
-    }),
+    }), */
     age: Joi.number().integer().min(1).max(200).required().messages({
       'number.min': 'L\'âge doit être au moins 1 semaine',
       'any.required': 'L\'âge est requis'
