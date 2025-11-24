@@ -66,12 +66,12 @@ const loginValidation = (data) => {
 };
 
 // Validation pour créer un lapin
-const lapinValidation = (data) => {
+/* const lapinValidation = (data) => {
   const schema = Joi.object({
     /* breed: Joi.string().min(2).max(100).required().messages({
       'string.min': 'La race doit contenir au moins 2 caractères',
       'any.required': 'La race est requise'
-    }), */
+    }), 
     age: Joi.number().integer().min(1).max(200).required().messages({
       'number.min': 'L\'âge doit être au moins 1 semaine',
       'any.required': 'L\'âge est requis'
@@ -87,7 +87,7 @@ const lapinValidation = (data) => {
     /* categories: Joi.string().valid('Lapin frais', 'Lapin fumé', 'Lapin prêt à cuire').required().messages({
       'any.only': 'La catégorie doit être: Lapin frais, Lapin fumé ou Lapin prêt à cuire',
       'any.required': 'La catégorie est requise'
-    }), */
+    }), 
     categoryId: Joi.string().hex().length(24).required().messages({
       'string.hex': 'L\'ID de catégorie doit être un ObjectId valide',
       'string.length': 'L\'ID de catégorie doit contenir 24 caractères',
@@ -98,6 +98,50 @@ const lapinValidation = (data) => {
       'number.min': 'Le stock ne peut pas être négatif',
       'any.required': 'Le stock est requis'
     })
+  });
+
+  return schema.validate(data);
+}; */
+
+const lapinValidation = (data) => {
+  const schema = Joi.object({
+    breed: Joi.string().min(2).max(100).required().messages({
+      'string.min': 'La race doit contenir au moins 2 caractères',
+      'string.max': 'La race ne peut pas dépasser 100 caractères',
+      'string.empty': 'La race est requise',
+      'any.required': 'La race est requise'
+    }),
+    age: Joi.number().integer().min(1).max(200).required().messages({
+      'number.base': 'L\'âge doit être un nombre',
+      'number.min': 'L\'âge doit être au moins 1 semaine',
+      'number.max': 'L\'âge ne peut pas dépasser 200 semaines',
+      'any.required': 'L\'âge est requis'
+    }),
+    weight: Joi.number().min(0.1).max(50).required().messages({
+      'number.base': 'Le poids doit être un nombre',
+      'number.min': 'Le poids doit être au moins 0.1 kg',
+      'number.max': 'Le poids ne peut pas dépasser 50 kg',
+      'any.required': 'Le poids est requis'
+    }),
+    price: Joi.number().min(0).required().messages({
+      'number.base': 'Le prix doit être un nombre',
+      'number.min': 'Le prix ne peut pas être négatif',
+      'any.required': 'Le prix est requis'
+    }),
+    categoryId: Joi.string().hex().length(24).required().messages({
+      'string.hex': 'L\'ID de catégorie doit être un ObjectId valide',
+      'string.length': 'L\'ID de catégorie doit contenir 24 caractères',
+      'any.required': 'La catégorie est requise'
+    }),
+    description: Joi.string().max(1000).allow('', null).optional().messages({
+      'string.max': 'La description ne peut pas dépasser 1000 caractères'
+    }),
+    stock: Joi.number().integer().min(0).required().messages({
+      'number.base': 'Le stock doit être un nombre',
+      'number.min': 'Le stock ne peut pas être négatif',
+      'any.required': 'Le stock est requis'
+    }),
+    images: Joi.array().items(Joi.string()).optional() // ← AJOUT si votre modèle a ce champ
   });
 
   return schema.validate(data);

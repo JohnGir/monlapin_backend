@@ -77,7 +77,7 @@ const lapinSchema = new mongoose.Schema({
   },
   breed: {
     type: String,
-    required: [true, 'Race du lapin est requise'],
+    required: [false, 'Race du lapin est requise'],
     trim: false
   },
   age: {
