@@ -14,8 +14,8 @@ const finalCleanup = async () => {
   collections.forEach(c => console.log(`- ${c.name}`));
   
   // 2. Vérifier les données orphelines
-  const Lapin = require('./models/Lapin');
-  const Category = require('./models/Category');
+  const Lapin = require('../models/Lapin');
+  const Category = require('../models/Category');
   
   const lapinsSansCategorieValide = await Lapin.countDocuments({
     categoryId: { $exists: true },

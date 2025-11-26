@@ -1,7 +1,7 @@
 // check-migration-status.js
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Lapin = require('./models/Lapin');
+const Lapin = require('../models/Lapin');
 
 const checkStatus = async () => {
   await mongoose.connect(process.env.MONGODB_URI);

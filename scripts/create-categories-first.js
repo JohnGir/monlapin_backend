@@ -1,7 +1,7 @@
 // create-categories-first.js
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Category = require('./models/Category');
+const Category = require('../models/Category');
 
 const createCategories = async () => {
   try {

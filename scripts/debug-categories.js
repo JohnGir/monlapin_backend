@@ -1,7 +1,7 @@
 // debug-categories.js
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Lapin = require('./models/Lapin');
+const Lapin = require('../models/Lapin');
 
 const debugLapins = async () => {
   try {

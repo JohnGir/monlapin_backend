@@ -1,8 +1,8 @@
 // migrate-categories.js
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Lapin = require('./models/Lapin');
-const Category = require('./models/Category');
+const Lapin = require('../models/Lapin');
+const Category = require('../models/Category');
 
 const migrateLapinsCategories = async () => {
   try {

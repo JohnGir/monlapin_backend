@@ -2,8 +2,8 @@
 require('dotenv').config();
 
 const mongoose = require('mongoose');
-const User = require('./models/User');
-const Eleveur = require('./models/Eleveur');
+const User = require('../models/User');
+const Eleveur = require('../models/Eleveur');
 
 const createEleveurApprouve = async () => {
   try {
@@ -71,7 +71,7 @@ const createEleveurApprouve = async () => {
     console.log('✅ Éleveur créé et approuvé:', eleveur._id);
 
     // Générer un token
-    const { generateToken } = require('./utils/token');
+    const { generateToken } = require('../utils/token');
     const token = generateToken(user._id);
     
     // Stocker le token
