@@ -1,5 +1,4 @@
-// models/Lapin.js
-
+// models/Lapin.js - VERSION CORRIGÉE
 const mongoose = require('mongoose');
 
 const lapinSchema = new mongoose.Schema({
@@ -15,22 +14,22 @@ const lapinSchema = new mongoose.Schema({
   },
   breed: {
     type: String,
-    required: [false, 'Race du lapin est requise'],
-    trim: false
+    required: true,
+    trim: true
   },
   age: {
     type: Number,
-    required: [true, 'Âge du lapin est requis'],
+    required: true,
     min: 1
   },
   weight: {
     type: Number,
-    required: [true, 'Poids du lapin est requis'],
+    required: true,
     min: 0.1
   },
   price: {
     type: Number,
-    required: [true, 'Prix du lapin est requis'],
+    required: true,
     min: 0
   },
   description: {
@@ -55,21 +54,23 @@ const lapinSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Mettre à jour le stock de la catégorie quand un lapin est créé/modifié
-lapinSchema.post('save', async function() {
-  await this.model('Category').updateStock(this.categoryId);
+// 🔥 CORRECTION : Hooks simplifiés et sécurisés
+lapinSchema.post('save', function(doc) {
+  // Ne rien faire pour l'instant - désactivé temporairement
+  console.log('🐇 Lapin sauvegardé:', doc._id);
 });
 
-lapinSchema.post('findOneAndUpdate', async function() {
-  const lapin = await this.model.findOne(this.getQuery());
-  if (lapin) {
-    await this.model('Category').updateStock(lapin.categoryId);
+lapinSchema.post('findOneAndUpdate', function(doc) {
+  // Ne rien faire pour l'instant - désactivé temporairement
+  if (doc) {
+    console.log('🐇 Lapin modifié:', doc._id);
   }
 });
 
-lapinSchema.post('findOneAndDelete', async function(lapin) {
-  if (lapin) {
-    await this.model('Category').updateStock(lapin.categoryId);
+lapinSchema.post('findOneAndDelete', function(doc) {
+  // Ne rien faire pour l'instant - désactivé temporairement  
+  if (doc) {
+    console.log('🐇 Lapin supprimé:', doc._id);
   }
 });
 
@@ -81,4 +82,3 @@ lapinSchema.index({ price: 1 });
 lapinSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Lapin', lapinSchema);
-
