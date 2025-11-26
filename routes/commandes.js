@@ -1,18 +1,16 @@
+// routes/commandes.js
 const express = require('express');
-const {
-  getMesCommandes,
-  createCommande,
-  getCommandesEleveur
-} = require('../controllers/commandeController');
-const { auth, authorize } = require('../middleware/auth');
-
 const router = express.Router();
+const commandeController = require('../controllers/commandeController');
+const { auth } = require('../middleware/auth');
 
-// Routes clients
-router.get('/mes-commandes', auth, authorize('client'), getMesCommandes);
-router.post('/', auth, authorize('client'), createCommande);
+// POST /api/commandes
+router.post('/', auth, commandeController.createCommande);
 
-// Routes éleveurs
-router.get('/eleveur/mes-commandes', auth, authorize('eleveur'), getCommandesEleveur);
+// GET /api/commandes/mes-commandes
+router.get('/mes-commandes', auth, commandeController.getMesCommandes);
+
+// GET /api/commandes/eleveur/mes-commandes  
+router.get('/eleveur/mes-commandes', auth, commandeController.getCommandesEleveur);
 
 module.exports = router;

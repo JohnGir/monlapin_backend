@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
 const commandeSchema = new mongoose.Schema({
+
   orderNumber: {
     type: String,
-    required: true,
+    required: [true, 'Le numéro de commande est requis'],
     unique: true
   },
   clientId: {
