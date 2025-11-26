@@ -1,17 +1,14 @@
 // controllers/orderController.js
-
-const Commande = require('../models/Commande'); // ⬅️ Changé
+const Order = require('../models/Order'); // ⬅️ Order, pas Commande
 const Lapin = require('../models/Lapin');
-const User = require('../models/User');
 
-// 🛒 POST /api/orders - Créer une nouvelle commande
 exports.createOrder = async (req, res) => {
   try {
     const { items, totalAmount, deliveryAddress, customerInfo } = req.body;
 
     console.log('📦 Début création commande pour user:', req.user.id);
 
-    // Validation basique
+    // Validation
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -19,34 +16,23 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    // Vérifier le stock pour chaque article
+    // Vérifier le stock
     for (const item of items) {
       const lapin = await Lapin.findById(item.lapinId);
-      
-      if (!lapin) {
-        return res.status(404).json({
-          success: false,
-          message: `Produit non trouvé: ${item.name}`
-        });
-      }
-
-      if (lapin.stock < item.quantity) {
+      if (!lapin || lapin.stock < item.quantity) {
         return res.status(400).json({
           success: false,
-          message: `Stock insuffisant pour ${item.name}. Stock disponible: ${lapin.stock}`
+          message: `Stock insuffisant pour ${item.name}`
         });
       }
     }
 
-    // Générer le numéro de commande
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 10000);
-    const orderNumber = `CMD-${timestamp}-${random}`;
-    
+    // Générer orderNumber
+    const orderNumber = `CMD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     console.log('🔢 OrderNumber généré:', orderNumber);
 
-    // Créer la commande
-    const commande = new Commande({ // ⬅️ Changé
+    // Créer avec Order
+    const order = new Order({
       orderNumber: orderNumber,
       customerId: req.user.id,
       items: items.map(item => ({
@@ -57,10 +43,7 @@ exports.createOrder = async (req, res) => {
         image: item.image
       })),
       totalAmount: totalAmount,
-      deliveryAddress: deliveryAddress || {
-        city: "Abidjan",
-        address: "À préciser"
-      },
+      deliveryAddress: deliveryAddress || { city: "Abidjan", address: "À préciser" },
       customerInfo: {
         email: req.user.email,
         phone: customerInfo?.phone || '',
@@ -71,56 +54,56 @@ exports.createOrder = async (req, res) => {
       paymentMethod: 'wave'
     });
 
-    console.log('💾 Sauvegarde de la commande...');
-    await commande.save(); // ⬅️ Changé
-    console.log('✅ Commande sauvegardée avec ID:', commande._id);
+    await order.save();
+    console.log('✅ Order sauvegardée:', order._id);
 
-    // Mettre à jour les stocks
+    // Mettre à jour stocks
     for (const item of items) {
-      await Lapin.findByIdAndUpdate(
-        item.lapinId,
-        { $inc: { stock: -item.quantity } }
-      );
-      console.log(`📉 Stock réduit pour ${item.lapinId}: -${item.quantity}`);
+      await Lapin.findByIdAndUpdate(item.lapinId, { $inc: { stock: -item.quantity } });
     }
 
-    // Récupérer la commande avec les détails
-    const commandeWithDetails = await Commande.findById(commande._id) // ⬅️ Changé
+    const orderWithDetails = await Order.findById(order._id)
       .populate('customerId', 'name email phone')
       .populate('items.lapinId', 'breed weight age');
-
-    console.log('🎉 Commande créée avec succès:', orderNumber);
 
     res.status(201).json({
       success: true,
       message: 'Commande créée avec succès',
-      data: commandeWithDetails
+      data: orderWithDetails
     });
 
   } catch (error) {
-    console.error('❌ Erreur création commande:', error);
-    
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Erreur de validation: ' + errors.join(', ')
-      });
-    }
-
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'Numéro de commande déjà utilisé, veuillez réessayer'
-      });
-    }
-
+    console.error('❌ Erreur création order:', error);
     res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de la création de la commande',
+      message: 'Erreur serveur',
       error: error.message
     });
   }
 };
 
-// Les autres fonctions restent similaires avec Commande au lieu de Order
+exports.getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ customerId: req.user.id })
+      .populate('items.lapinId', 'breed images')
+      .sort({ createdAt: -1 });
+
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('customerId', 'name email phone')
+      .populate('items.lapinId', 'breed weight age images');
+
+    if (!order) return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+
+    res.json({ success: true, data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};

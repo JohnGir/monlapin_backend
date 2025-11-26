@@ -1,18 +1,10 @@
+// server.js - GARDER /api/orders POUR LE FRONTEND
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
-const User = require('./models/User');
-const Eleveur = require('./models/Eleveur');
-const Client = require('./models/Client');
-const Lapin = require('./models/Lapin');
-const { generateToken } = require('./utils/token');
-const orderRoutes = require('./routes/orders');
 
-// Charger les variables d'environnement
 dotenv.config();
-
-// Connexion à la base de données
 connectDB();
 
 const app = express();
@@ -21,10 +13,12 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Autoriser uniquement ton front
+// CORS
 const allowedOrigins = [
   'https://monlapinci.com',
   'https://www.monlapinci.com',
+  'http://localhost:3000',
+  'http://localhost:8081',
 ];
 
 app.use(cors({
@@ -40,15 +34,15 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-
-
-// Routes
+// 🔥 CORRECTION : Gardez /api/orders pour le frontend existant
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lapins', require('./routes/lapins'));
-app.use('/api/commandes', require('./routes/commandes')); // ← 
-app.use('/api/newsletter', require('./routes/newsletter')); // ← 
-app.use('/api/categories', require('./routes/categories')); // ← 
-app.use('/api/orders', orderRoutes);
+app.use('/api/orders', require('./routes/orders')); // ⬅️ GARDER POUR LE FRONTEND
+app.use('/api/newsletter', require('./routes/newsletter'));
+app.use('/api/categories', require('./routes/categories'));
+
+// SUPPRIMEZ cette ligne si elle existe :
+// app.use('/api/commandes', require('./routes/commandes'));
 
 // Route de test
 app.get('/', (req, res) => {
@@ -60,8 +54,9 @@ app.get('/', (req, res) => {
     endpoints: {
       auth: '/api/auth',
       lapins: '/api/lapins', 
-      commandes: '/api/commandes',
-      newsletter: '/api/newsletter'
+      orders: '/api/orders', // ⬅️ Coherent avec le frontend
+      newsletter: '/api/newsletter',
+      categories: '/api/categories'
     }
   });
 });
@@ -83,18 +78,15 @@ app.use((error, req, res, next) => {
   });
 });
 
-
-
-
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📊 Environnement: ${process.env.NODE_ENV}`);
-  console.log(`🔗 URL: http://localhost:${PORT}`);
   console.log('\n📋 Endpoints disponibles:');
   console.log('   🔐 Auth:      /api/auth');
   console.log('   🐇 Lapins:    /api/lapins');
-  console.log('   📦 Commandes: /api/commandes');
+  console.log('   📦 Orders:    /api/orders'); // ⬅️ Coherent
   console.log('   📧 Newsletter:/api/newsletter');
+  console.log('   🗂️ Categories:/api/categories');
 });
