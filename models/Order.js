@@ -1,3 +1,4 @@
+// models/Order.js
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
@@ -55,7 +56,8 @@ const orderSchema = new mongoose.Schema({
     default: 'wave'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'commandes' // ⬅️ FORCE l'utilisation de la collection existante
 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model('Order', orderSchema, 'commandes'); // ⬅️ ICI AUSSI

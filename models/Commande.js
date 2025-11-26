@@ -1,21 +1,16 @@
+// models/Commande.js
 const mongoose = require('mongoose');
 
 const commandeSchema = new mongoose.Schema({
-
   orderNumber: {
     type: String,
-    required: [true, 'Le numéro de commande est requis'],
-    unique: true
-  },
-  clientId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
+    unique: true,
     required: true
   },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
-    default: 'pending'
+  customerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   items: [{
     lapinId: {
@@ -23,69 +18,45 @@ const commandeSchema = new mongoose.Schema({
       ref: 'Lapin',
       required: true
     },
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1
-    },
-    unitPrice: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    lapinBreed: {
-      type: String,
-      required: true
-    }
+    name: String,
+    price: Number,
+    quantity: Number,
+    image: String
   }],
   totalAmount: {
     type: Number,
-    required: true,
-    min: 0
+    required: true
   },
-  paymentMethod: {
+  status: {
     type: String,
-    enum: ['cash_on_delivery', 'mobile_money'],
-    default: 'cash_on_delivery'
+    enum: ['pending', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
+  },
+  deliveryAddress: {
+    city: String,
+    address: String,
+    coordinates: {
+      lat: Number,
+      lng: Number
+    }
+  },
+  customerInfo: {
+    email: String,
+    phone: String,
+    fullName: String
   },
   paymentStatus: {
     type: String,
     enum: ['pending', 'paid', 'failed'],
     default: 'pending'
   },
-  deliveryAddress: {
-    addressLine1: { type: String, required: true },
-    addressLine2: { type: String },
-    city: { type: String, required: true },
-    postalCode: { type: String },
-    contactPhone: { type: String }
-  },
-  assignedEleveurId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Eleveur'
-  },
-  livraison: {
-    yangoTrackingId: { type: String },
-    livraisonStatus: {
-      type: String,
-      enum: ['en_attente', 'en_cours', 'livré'],
-      default: 'en_attente'
-    },
-    estimatedDelivery: { type: Date },
-    deliveryNotes: { type: String }
-  },
-  notes: {
-    type: String
+  paymentMethod: {
+    type: String,
+    enum: ['wave', 'orange_money', 'cash_on_delivery'],
+    default: 'wave'
   }
 }, {
   timestamps: true
 });
-
-// Index pour les recherches
-commandeSchema.index({ orderNumber: 1 }, { unique: true });
-commandeSchema.index({ clientId: 1 });
-commandeSchema.index({ status: 1 });
-commandeSchema.index({ assignedEleveurId: 1 });
-commandeSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Commande', commandeSchema);
