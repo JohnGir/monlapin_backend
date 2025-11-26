@@ -1,6 +1,13 @@
 // services/emailService.js
 const nodemailer = require('nodemailer');
 
+console.log('🔧 Configuration SMTP:');
+console.log('- Host:', process.env.SMTP_HOST);
+console.log('- Port:', process.env.SMTP_PORT);
+console.log('- User:', process.env.SMTP_USER);
+console.log('- Pass length:', process.env.SMTP_PASS?.length);
+
+
 // Configuration
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -12,9 +19,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// Test de connexion SMTP
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log('❌ Erreur connexion SMTP:', error);
+  } else {
+    console.log('✅ Serveur SMTP prêt');
+  }
+});
+
 // Email au client
 exports.sendOrderConfirmationEmail = async (order) => {
   try {
+
+    console.log('📧 Tentative envoi email à:', order.customerInfo.email);
     const mailOptions = {
       from: '"Mon Lapin CI" <noreply@monlapinci.com>',
       to: order.customerInfo.email,
@@ -84,6 +102,7 @@ exports.sendOrderConfirmationEmail = async (order) => {
 
     await transporter.sendMail(mailOptions);
     console.log(`✅ Email client envoyé à: ${order.customerInfo.email}`);
+    console.log('✅ Email envoyé avec succès:', info.messageId);
     
   } catch (error) {
     console.error('❌ Erreur envoi email client:', error);
@@ -167,7 +186,7 @@ exports.sendOrderNotificationToAdmin = async (order) => {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Notification admin envoyée à: ${adminEmail}`);
+    console.log(`✅ Notification admin envoyée à: ${adminEmail, supportEmail}`);
     
   } catch (error) {
     console.error('❌ Erreur envoi notification admin:', error);
