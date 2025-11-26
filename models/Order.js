@@ -48,20 +48,14 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'paid', 'failed'],
     default: 'pending'
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['wave', 'orange_money', 'cash_on_delivery'],
+    default: 'wave'
   }
 }, {
   timestamps: true
-});
-
-// Générer un numéro de commande unique
-orderSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const date = new Date();
-    const timestamp = date.getTime();
-    const random = Math.floor(Math.random() * 1000);
-    this.orderNumber = `CMD-${timestamp}-${random}`;
-  }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);
