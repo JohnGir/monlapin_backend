@@ -7,6 +7,7 @@ const Eleveur = require('./models/Eleveur');
 const Client = require('./models/Client');
 const Lapin = require('./models/Lapin');
 const { generateToken } = require('./utils/token');
+const orderRoutes = require('./routes/orders');
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -47,6 +48,7 @@ app.use('/api/lapins', require('./routes/lapins'));
 app.use('/api/commandes', require('./routes/commandes')); // ← 
 app.use('/api/newsletter', require('./routes/newsletter')); // ← 
 app.use('/api/categories', require('./routes/categories')); // ← 
+app.use('/api/orders', orderRoutes);
 
 // Route de test
 app.get('/', (req, res) => {
